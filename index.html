@@ -35,11 +35,10 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- Tim MPL -->
     <div class="card order-3">
       <h1>Tim MPL S16</h1>
       <ul class="team-list" id="teamList"></ul>
-      <p class="small">Klik tim untuk filter jadwal (bisa pilih lebih dari 1).<br>Format: Double Round Robin, BO3</p>
+      <p class="small">Klik tim untuk filter jadwal (bisa pilih lebih dari 1)</p>
       <div class="btns">
         <button onclick="resetFilter()">Reset Filter</button>
         <button onclick="saveData()">Simpan Data</button>
@@ -48,14 +47,12 @@
     </div>
 
     <div>
-      <!-- Jadwal -->
       <div class="card order-1">
         <h2>Jadwal Pertandingan</h2>
         <div class="tabs" id="weekTabs"></div>
         <div id="fixtures"></div>
       </div>
 
-      <!-- Standings -->
       <div class="card order-2" style="margin-top:16px">
         <h2>Klasemen</h2>
         <table>
@@ -94,7 +91,6 @@
         [ ["Bigetron Alpha","Geek Fam"],["Dewa United","ONIC"],["EVOS","Natus Vincere"],["Team Liquid ID","RRQ Hoshi"],["ONIC","Alter Ego"],["Dewa United","EVOS"],["Alter Ego","Bigetron Alpha"],["RRQ Hoshi","Natus Vincere"] ]
       ];
 
-      // --- Hardcoded skor awal (admin update di sini) ---
       results = {
       // Week 1
       "0-0": {a:2,b:0},
@@ -273,7 +269,6 @@
       });
     }
 
-    // --- Reset Filter ---
     function resetFilter(){
       selectedTeams = new Set();
       renderTeamList();
@@ -282,7 +277,6 @@
       renderFixtures(idx);
     }
 
-    // --- Simpan & Load ---
     function saveData(){
       const saveObj = {
         results: results,
@@ -318,7 +312,13 @@
     <footer style="margin-top:30px;padding:16px;background:#141a2e;color:#aaa;text-align:center;font-size:12px;border-radius:8px">
     <p><strong>Disclaimer:</strong> Website ini adalah simulasi buatan penggemar (fan-made) untuk MPL ID Season 16. 
     Tidak berafiliasi dengan Moonton, MPL Indonesia, maupun tim profesional terkait. 
-    Seluruh konten hanyalah prediksi/simulasi dan bukan data resmi.</p>
+    Seluruh konten hanyalah prediksi/simulasi dan bukan data resmi. 
+    Link donasi yang tersedia hanya untuk mendukung biaya hosting proyek ini.</p>
+  <!-- Visitor Badge -->
+  <div style="margin-top:10px;">
+    <img src="https://visitor-badge.laobi.icu/badge?page_id=WAHYUWIDIWIDAYAT.mpl_prediction" alt="visitor badge"/>
+  </div>
+</footer>
   </footer>
 </body>
 </html>
