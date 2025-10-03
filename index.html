@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MPL S16 Fixtures</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#0b1220;color:#eee;margin:0;padding:20px}
+    h1,h2{margin:0 0 10px}
+    .wrap{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:340px 1fr;gap:20px}
+    .card{background:#141a2e;border-radius:12px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,0.4)}
+    .small{font-size:13px;color:#aaa}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.1)}
+    th{color:#aaa;text-align:left;font-size:13px}
+    .fixture{margin-bottom:12px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.05)}
+    select{background:#0b1220;color:#fff;border:1px solid #555;border-radius:6px;padding:4px}
+    .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+    .tab{padding:6px 12px;border-radius:8px;background:#1d233a;cursor:pointer;font-size:14px}
+    .tab.active{background:#06b6d4;color:#fff}
+    ul.team-list{padding-left:0;list-style:none;line-height:1.6}
+    ul.team-list li{cursor:pointer;padding:6px 10px;border-radius:6px;margin-bottom:6px;transition:background 0.2s;}
+    ul.team-list li:hover{background:rgba(255,255,255,0.1);}
+    ul.team-list li.active{background:#06b6d4;color:#fff;}
+    @media(max-width:880px){
+      .wrap{grid-template-columns:1fr}
+      .order-1{order:1}
+      .order-2{order:2}
+      .order-3{order:3}
+    }
+    .btns{margin-top:10px;display:flex;gap:10px}
+    button{padding:6px 12px;border:none;border-radius:6px;background:#06b6d4;color:#fff;cursor:pointer}
+    button:hover{background:#0891a6}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- Tim MPL -->
+    <div class="card order-3">
+      <h1>Tim MPL S16</h1>
+      <ul class="team-list" id="teamList"></ul>
+      <p class="small">Klik tim untuk filter jadwal (bisa pilih lebih dari 1).<br>Format: Double Round Robin, BO3</p>
+      <div class="btns">
+        <button onclick="resetFilter()">Reset Filter</button>
+        <button onclick="saveData()">Simpan Data</button>
+        <button onclick="resetData()">Reset Data</button>
+      </div>
+    </div>
+
+    <div>
+      <!-- Jadwal -->
+      <div class="card order-1">
+        <h2>Jadwal Pertandingan</h2>
+        <div class="tabs" id="weekTabs"></div>
+        <div id="fixtures"></div>
+      </div>
+
+      <!-- Standings -->
+      <div class="card order-2" style="margin-top:16px">
+        <h2>Klasemen</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Tim</th>
+              <th>Match Poin</th>
+              <th>Match W-L</th>
+              <th>Net Game Win</th>
+              <th>Game W-L</th>
+            </tr>
+          </thead>
+          <tbody id="standings"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let teams = ["ONIC","Natus Vincere","Team Liquid ID","RRQ Hoshi","Alter Ego","EVOS","Dewa United","Geek Fam","Bigetron Alpha"];
+    let weeks = [];
+    let selectedTeams = new Set();
+    let results = {};
+
+    function applyFixtures(){
+      weeks = [
+        [ ["ONIC","Dewa United"],["Natus Vincere","EVOS"],["Team Liquid ID","Geek Fam"],["ONIC","Bigetron Alpha"],["RRQ Hoshi","Alter Ego"],["Bigetron Alpha","Natus Vincere"],["Geek Fam","RRQ Hoshi"],["Alter Ego","Dewa United"] ],
+        [ ["ONIC","Geek Fam"],["Dewa United","Natus Vincere"],["Geek Fam","Bigetron Alpha"],["Alter Ego","EVOS"],["Team Liquid ID","Dewa United"],["Natus Vincere","Alter Ego"],["RRQ Hoshi","Team Liquid ID"],["Bigetron Alpha","EVOS"] ],
+        [ ["Natus Vincere","RRQ Hoshi"],["EVOS","Team Liquid ID"],["EVOS","Geek Fam"],["Bigetron Alpha","Alter Ego"],["RRQ Hoshi","ONIC"],["Dewa United","Bigetron Alpha"],["Alter Ego","ONIC"],["Team Liquid ID","Natus Vincere"] ],
+        [ ["Natus Vincere","ONIC"],["EVOS","Dewa United"],["Team Liquid ID","Bigetron Alpha"],["RRQ Hoshi","EVOS"],["Geek Fam","Alter Ego"],["ONIC","Team Liquid ID"],["Bigetron Alpha","RRQ Hoshi"],["Dewa United","Geek Fam"] ],
+        [ ["Geek Fam","Natus Vincere"],["EVOS","ONIC"],["Dewa United","RRQ Hoshi"],["Alter Ego","Team Liquid ID"],["EVOS","Bigetron Alpha"],["Alter Ego","Natus Vincere"],["Geek Fam","ONIC"],["Dewa United","Team Liquid ID"] ],
+        [ ["Natus Vincere","Dewa United"],["Alter Ego","Geek Fam"],["EVOS","Alter Ego"],["Team Liquid ID","ONIC"],["RRQ Hoshi","Bigetron Alpha"],["Natus Vincere","Team Liquid ID"],["ONIC","RRQ Hoshi"],["Geek Fam","EVOS"] ],
+        [ ["Geek Fam","Dewa United"],["Bigetron Alpha","Team Liquid ID"],["Dewa United","Alter Ego"],["EVOS","RRQ Hoshi"],["ONIC","Natus Vincere"],["RRQ Hoshi","Geek Fam"],["Natus Vincere","Bigetron Alpha"],["Team Liquid ID","EVOS"] ],
+        [ ["Team Liquid ID","Alter Ego"],["Bigetron Alpha","Dewa United"],["Geek Fam","Team Liquid ID"],["Alter Ego","RRQ Hoshi"],["Bigetron Alpha","ONIC"],["RRQ Hoshi","Dewa United"],["ONIC","EVOS"],["Natus Vincere","Geek Fam"] ],
+        [ ["Bigetron Alpha","Geek Fam"],["Dewa United","ONIC"],["EVOS","Natus Vincere"],["Team Liquid ID","RRQ Hoshi"],["ONIC","Alter Ego"],["Dewa United","EVOS"],["Alter Ego","Bigetron Alpha"],["RRQ Hoshi","Natus Vincere"] ]
+      ];
+
+      // --- Hardcoded skor awal (admin update di sini) ---
+      results = {
+      // Week 1
+      "0-0": {a:2,b:0},
+      "0-1": {a:0,b:2},
+      "0-2": {a:1,b:2},
+      "0-3": {a:2,b:0},
+      "0-4": {a:2,b:1},
+      "0-5": {a:1,b:2},
+      "0-6": {a:2,b:0},
+      "0-7": {a:2,b:0},
+
+      // Week 2
+      "1-0": {a:2,b:0},
+      "1-1": {a:2,b:0},
+      "1-2": {a:0,b:2},
+      "1-3": {a:2,b:1},
+      "1-4": {a:1,b:2},
+      "1-5": {a:2,b:0},
+      "1-6": {a:2,b:0},
+      "1-7": {a:2,b:1},
+
+      // Week 3
+      "2-0": {a:0,b:2},
+      "2-1": {a:2,b:0},
+      "2-2": {a:2,b:0},
+      "2-3": {a:2,b:1},
+      "2-4": {a:0,b:2},
+      "2-5": {a:1,b:2},
+      "2-6": {a:1,b:2},
+      "2-7": {a:0,b:2},
+
+      // Week 4
+      "3-0": {a:1,b:2},
+      "3-1": {a:2,b:0},
+      "3-2": {a:0,b:2},
+      "3-3": {a:2,b:0},
+      "3-4": {a:0,b:2},
+      "3-5": {a:2,b:0},
+      "3-6": {a:2,b:1},
+      "3-7": {a:2,b:1},
+
+      // Week 5
+      "4-0": {a:0,b:2},
+      "4-1": {a:1,b:2},
+      "4-2": {a:2,b:0},
+      "4-3": {a:2,b:1},
+      "4-4": {a:0,b:2},
+      "4-5": {a:2,b:1},
+      "4-6": {a:0,b:2},
+      "4-7": {a:2,b:0},
+
+      // Week 6
+      "5-0": {a:0,b:2},
+      "5-1": {a:2,b:0},
+      "5-2": {a:1,b:2},
+      "5-3": {a:0,b:2},
+      "5-4": {a:1,b:2},
+      "5-5": {a:2,b:1},
+      "5-6": {a:2,b:0},
+      "5-7": {a:0,b:2},
+
+	"6-0": {a:2,b:0},
+	"6-1": {a:0,b:2},
+    };
+
+
+      renderWeekTabs();
+      renderFixtures(0);
+      renderStandings();
+      renderTeamList();
+    }
+
+    function renderTeamList(){
+      const list = document.getElementById("teamList");
+      list.innerHTML = "";
+      teams.forEach(t=>{
+        const li = document.createElement("li");
+        li.textContent = t;
+        if(selectedTeams.has(t)) li.classList.add("active");
+        li.addEventListener("click",()=>{
+          if(selectedTeams.has(t)){selectedTeams.delete(t);li.classList.remove("active");}
+          else{selectedTeams.add(t);li.classList.add("active");}
+          const activeTab=document.querySelector('.tab.active');
+          const idx=[...activeTab.parentNode.children].indexOf(activeTab);
+          renderFixtures(idx);
+        });
+        list.appendChild(li);
+      });
+    }
+
+    function renderWeekTabs(){
+      const box=document.getElementById('weekTabs');
+      box.innerHTML='';
+      weeks.forEach((w,idx)=>{
+        const btn=document.createElement('div');
+        btn.className='tab'+(idx===0?' active':'');
+        btn.textContent='Week '+(idx+1);
+        btn.addEventListener('click',()=>{
+          document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+          btn.classList.add('active');
+          renderFixtures(idx);
+        });
+        box.appendChild(btn);
+      });
+    }
+
+    function renderFixtures(weekIdx){
+      const box=document.getElementById('fixtures');
+      box.innerHTML='';
+      weeks[weekIdx].forEach((match,idx)=>{
+        if(selectedTeams.size>0 && !([...selectedTeams].some(t=> match.includes(t)))) return;
+        const key=`${weekIdx}-${idx}`;
+        if(!results[key]) results[key]={a:0,b:0};
+        const div=document.createElement('div');
+        div.className='fixture';
+        div.innerHTML=`<div><strong>${match[0]}</strong> vs <strong>${match[1]}</strong></div>
+          <div>
+            <br>
+            <label class="small">Skor:</label>
+            <select>
+              <option value="0-0">-</option>
+              <option value="2-0">2-0</option>
+              <option value="2-1">2-1</option>
+              <option value="1-2">1-2</option>
+              <option value="0-2">0-2</option>
+            </select>
+          </div>`;
+        const select=div.querySelector('select');
+        select.value=`${results[key].a}-${results[key].b}`;
+        select.addEventListener('change',(e)=>{
+          const val=e.target.value.split('-');
+          results[key].a=parseInt(val[0]);results[key].b=parseInt(val[1]);
+          renderStandings();
+        });
+        box.appendChild(div);
+      });
+    }
+
+    function calcStandings(){
+      const stats=teams.map(t=>({name:t,mp:0,mw:0,ml:0,gw:0,gl:0}));
+      Object.keys(results).forEach(key=>{
+        const [weekIdx,matchIdx]=key.split('-').map(Number);
+        const match=weeks[weekIdx][matchIdx];
+        const score=results[key];
+        if(score.a===0 && score.b===0) return;
+        const aIdx=teams.indexOf(match[0]);
+        const bIdx=teams.indexOf(match[1]);
+        stats[aIdx].gw+=score.a; stats[aIdx].gl+=score.b;
+        stats[bIdx].gw+=score.b; stats[bIdx].gl+=score.a;
+        stats[aIdx].mp++; stats[bIdx].mp++;
+        if(score.a>score.b){stats[aIdx].mw++; stats[bIdx].ml++;}
+        else{stats[bIdx].mw++; stats[aIdx].ml++;}
+      });
+      return stats;
+    }
+
+    function renderStandings(){
+      const stats=calcStandings();
+      const allEmpty = stats.every(s => s.mp === 0);
+      if(allEmpty){stats.sort((a,b)=> a.name.localeCompare(b.name));}
+      else{stats.sort((x,y)=> y.mw-x.mw || (y.gw-y.gl)-(x.gw-x.gl));}
+      const tbody=document.getElementById('standings');
+      tbody.innerHTML='';
+      stats.forEach((s,i)=>{
+        const tr=document.createElement('tr');
+        if(i>=6){ tr.style.color="red"; }
+        const netGame = s.gw - s.gl;
+        tr.innerHTML=`
+          <td>${i+1}</td>
+          <td>${s.name}</td>
+          <td>${s.mp}</td>
+          <td>${s.mw}-${s.ml}</td>
+          <td>${netGame}</td>
+          <td>${s.gw}-${s.gl}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- Reset Filter ---
+    function resetFilter(){
+      selectedTeams = new Set();
+      renderTeamList();
+      const activeTab = document.querySelector('.tab.active');
+      const idx = [...activeTab.parentNode.children].indexOf(activeTab);
+      renderFixtures(idx);
+    }
+
+    // --- Simpan & Load ---
+    function saveData(){
+      const saveObj = {
+        results: results,
+        selectedTeams: [...selectedTeams]
+      };
+      localStorage.setItem("mplS16Data", JSON.stringify(saveObj));
+      alert("Data berhasil disimpan!");
+    }
+
+    function loadData(){
+      const data = localStorage.getItem("mplS16Data");
+      if(data){
+        try{
+          const obj=JSON.parse(data);
+          results=obj.results||results;
+          selectedTeams=new Set(obj.selectedTeams||[]);
+        }catch(e){console.log("Load error",e);}
+      }
+    }
+
+    function resetData(){
+      localStorage.removeItem("mplS16Data");
+      results={};
+      selectedTeams=new Set();
+      applyFixtures();
+      alert("Data direset.");
+    }
+
+    // Init
+    loadData();
+    applyFixtures();
+  </script>
+    <footer style="margin-top:30px;padding:16px;background:#141a2e;color:#aaa;text-align:center;font-size:12px;border-radius:8px">
+    <p><strong>Disclaimer:</strong> Website ini adalah simulasi buatan penggemar (fan-made) untuk MPL ID Season 16. 
+    Tidak berafiliasi dengan Moonton, MPL Indonesia, maupun tim profesional terkait. 
+    Seluruh konten hanyalah prediksi/simulasi dan bukan data resmi. 
+    Link donasi yang tersedia hanya untuk mendukung biaya hosting proyek ini.</p>
+  </footer>
+</body>
+</html>
